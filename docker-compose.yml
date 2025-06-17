@@ -1,0 +1,21 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+services:
+  rediscachedemo:
+    image: rediscachedemo
+    build:
+      context: .
+      dockerfile: RedisCacheDemo/Dockerfile
+    ports:
+      - 5129:5129
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+  
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: always
