@@ -33,10 +33,14 @@ app.MapGet("/weatherforecast", async (IConnectionMultiplexer redis) =>
 {
     var db = redis.GetDatabase();
     var cacheKey = "weatherforecast";
+    var slidingExpiration = TimeSpan.FromMinutes(5);
     var cached = await db.StringGetAsync(cacheKey);
 
     if (!cached.IsNullOrEmpty)
     {
+        // Reset expiration on cache hit (sliding expiration)
+        await db.KeyExpireAsync(cacheKey, slidingExpiration);
+
         return Results.Ok(System.Text.Json.JsonSerializer.Deserialize<WeatherForecast[]>(cached!));
     }
 
@@ -52,7 +56,7 @@ app.MapGet("/weatherforecast", async (IConnectionMultiplexer redis) =>
     await db.StringSetAsync(
         cacheKey,
         System.Text.Json.JsonSerializer.Serialize(forecast),
-        TimeSpan.FromMinutes(5)
+        slidingExpiration
     );
 
     return Results.Ok(forecast);
